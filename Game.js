@@ -16,9 +16,11 @@ export default class Game extends React.Component {
 
   componentWillMount(){
     // Camera
+    viewSize = 1000;
     const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-    this.width = screenWidth;
-    this.height = screenHeight;
+    aspectRatio = screenWidth / screenHeight;
+    this.width = aspectRatio * viewSize;
+    this.height = viewSize;
 
     this.camera = new THREE.OrthographicCamera(
       -this.width / 2,
@@ -38,7 +40,12 @@ export default class Game extends React.Component {
 
   createGameScene=() =>{
     this.background = Meshes.createBackground(this.width, this.height);
+    this.planeMesh = Meshes.createPlane(THREEView);
+    this.startScreen = Meshes.createStart(THREEView);
+
     this.scene.add(this.background);
+    this.scene.add(this.startScreen);
+    this.scene.add(this.planeMesh);
   }
 
   tick = dt => {};
