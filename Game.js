@@ -1,7 +1,6 @@
 import React from 'react';
 import Expo from 'expo';
 import { StyleSheet, Text, View, Dimensions, PanResponder } from 'react-native';
-import Accelerometer from './src/components/accelerometer'
 import * as Meshes from './src/Utilities/scene';
 
 // can't use the three import
@@ -9,10 +8,14 @@ const THREE = require('three');
 
 const THREEView = Expo.createTHREEViewClass(THREE);
 
-
 // Game based on floatyplane-starter from expo tutorials
 // https://github.com/expo/floatyplane-starter/blob/master/Game/index.js
 export default class Game extends React.Component {
+
+  state = {
+    scoreCount: 0,
+    started: false,
+  };
 
   componentWillMount(){
     // Camera
@@ -39,16 +42,41 @@ export default class Game extends React.Component {
   }
 
   createGameScene=() =>{
+    this.animatingIds = [];
+    this.setState({ started: false, scoreCount: 0 });
     this.background = Meshes.createBackground(this.width, this.height);
-    this.planeMesh = Meshes.createPlane(THREEView);
+    this.planeMesh = Meshes.createHero(THREEView);
     this.startScreen = Meshes.createStart(THREEView);
 
     this.scene.add(this.background);
     this.scene.add(this.startScreen);
     this.scene.add(this.planeMesh);
+    this.animatingIds.push(this.planeMesh.id);
   }
 
-  tick = dt => {};
+  startGame = () =>{
+    this.setState({started:true});
+    this.scene.remove(this.startScreen);
+  };
+
+  updateModels=()=>{
+    this.animatingIds.forEach((id)=>{
+      var obj = this.scene.getObjectById(id);
+      obj.frame.updateFrame();
+    });
+  }
+
+  tick = dt => {
+    this.updateModels();
+  };
+
+  touch = (_, gesture) =>{
+    if(this.state.started){
+
+    }else{
+      this.startGame();
+    }
+  }
 
   panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
