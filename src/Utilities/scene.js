@@ -29,6 +29,9 @@ export const createHero = (THREEView) => {
   const geo = new THREE.PlaneBufferGeometry(120, 200);
   const material = loadImageMaterial("rokoala", THREEView);
   const mesh = new THREE.Mesh(geo, material);
+  mesh.position.x=0
+  mesh.position.y=0
+  mesh.position.z=0
   mesh.frame = new Frame(material.map, {maximumFrame:16});
   return mesh;
 }

@@ -38,23 +38,33 @@ export default class Game extends React.Component {
     // Scene allows you to set up what and where is to be rendered by three.js
     // this is where you plaace objects, lights and cameras
     this.scene = new THREE.Scene();
+
+    // create raycaster to check touch on elements
+    this.raycaster = new THREE.Raycaster();
     this.createGameScene();
   }
 
-  createGameScene=() =>{
+  createGameScene=()=>{
     this.animatingIds = [];
+    this.draggables = [];
+    this.selection = null;
     this.setState({ started: false, scoreCount: 0 });
     this.background = Meshes.createBackground(this.width, this.height);
-    this.planeMesh = Meshes.createHero(THREEView);
+    this.hero = Meshes.createHero(THREEView);
     this.startScreen = Meshes.createStart(THREEView);
 
     this.scene.add(this.background);
     this.scene.add(this.startScreen);
-    this.scene.add(this.planeMesh);
-    this.animatingIds.push(this.planeMesh.id);
+    this.scene.add(this.hero);
+    this.draggables.push(this.hero);
+
+    //Initial touch position to calculate drag and drop distance
+    this.dragInitialPosition ={x:0,y:0}
+    //Mesh ids that needs to update frames
+    this.animatingIds.push(this.hero.id);
   }
 
-  startGame = () =>{
+  startGame=()=>{
     this.setState({started:true});
     this.scene.remove(this.startScreen);
   };
@@ -66,21 +76,50 @@ export default class Game extends React.Component {
     });
   }
 
-  tick = dt => {
+  tick=dt=>{
     this.updateModels();
   };
 
-  touch = (_, gesture) =>{
-    if(this.state.started){
+  touch=(event, gesture)=>{
 
+    var points = new THREE.Vector2();
+
+    points.x = ( gesture.x0/ Dimensions.get('window').width)*2 -1;
+    points.y = -( gesture.y0/ Dimensions.get('window').height)*2 +1;
+    this.raycaster.setFromCamera(points,this.camera)
+    if(this.state.started){
+      var intersects=this.raycaster.intersectObjects(this.draggables);
+      if(intersects.length > 0){
+        this.selection=intersects[0];
+        this.dragInitialPosition.x = this.selection.object.position.x;
+        this.dragInitialPosition.y = this.selection.object.position.y;
+      }else{
+        // Move character
+      }
     }else{
       this.startGame();
     }
   }
 
-  panResponder = PanResponder.create({
+  touchMove=(event, gesture)=>{
+    event.preventDefault();
+    if(this.selection){
+      if(gesture.dx || gesture.dy){
+        this.selection.object.position.x=this.dragInitialPosition.x+gesture.dx;
+        this.selection.object.position.y=this.dragInitialPosition.y-gesture.dy;
+      }
+    }
+  }
+
+  touchRelease=(event, gesture)=>{
+    this.selection=null;
+  }
+
+  panResponder=PanResponder.create({
     onStartShouldSetPanResponder: () => true,
-    onPanResponderGrant: this.touch,
+    onPanResponderGrant: this.touch.bind(this),
+    onPanResponderMove: this.touchMove.bind(this),
+    onPanResponderRelease:this.touchRelease.bind(this),
     onShouldBlockNativeResponder: () => false,
   })
 
